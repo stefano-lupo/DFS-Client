@@ -1,32 +1,41 @@
 import fetch from 'node-fetch';
 import fs from 'fs'
+import FormData from 'form-data';
 
 
 // const FILE_SERVER = "http://localhost:3000";   // shouldn't need to know where this is
 const DIRECTORY_SERVICE = "http://localhost:3001";
-const LOCK_SERVER = "http://localhost:3002";
+const LOCK_SERVER = "http://192.168.1.17:3002";
+// const LOCK_SERVER = "http://localhost:3002";
+
+const TEST_EMAIL = 'stefano@test.com';
+const TEST_NAME = 'Stefano';
+const TEST_PASSWORD = '1234';
 
 
-/**
+/***********************************************************************************************************************
  * Main
- */
+ **********************************************************************************************************************/
 runClient();
 
-
-
-
-
-
 async function runClient() {
-  await register("lupos@tcd.ie", "1234", "Stefano");
-  const remoteHost = await getRemoteHost();
-  await createRemoteFile(remoteHost, "files/stefano.txt");
+  await register(TEST_EMAIL, TEST_PASSWORD, TEST_NAME);
+  await createRemoteFile("files/stefano.txt", TEST_EMAIL);
+  await getRemoteFile("stefano.txt")
 
 }
 
+
+
+
+/***********************************************************************************************************************
+ * API Methods
+ **********************************************************************************************************************/
+
 /**
  * Register with directory service
- * POST {email, password, name}
+ * POST <DIRECTORY_SERVICE>/register
+ * body {email, password, name}
  * @param email
  * @param password
  * @param name
@@ -38,40 +47,33 @@ async function register(email, password, name) {
     logError(status, response);
   }
 
+
   console.log(`Successfully Logged in ${email}`);
   return ok;
 }
 
 
-/**
- * Get Remote Node to upload to
- */
-async function getRemoteHost() {
-  const { ok, status, response } = await makeRequest(`${DIRECTORY_SERVICE}/remoteHost`, 'get');
-  if(!ok) {
-    logError(status, response);
-  }
-
-  console.log(`Received available remote host ${response}`);
-  return response;
-}
-
 
 /**
- * POST <remoteHost>/file body{file, email}
  * Create a File on the remote server
+ * POST <remoteHost>/file
+ * body{file, email}
+ * @param filename name of file to fetch
+ * @param email client's email
  */
-async function createRemoteFile(remoteHost, filename) {
-  const stats = fs.statSync(filename);
-  const fileSizeInBytes = stats.size;
-  const readStream = fs.createReadStream(filename);
+async function createRemoteFile(filename, email) {
+
+  // Get remote host from directory service
+  const remoteHost = await getRemoteHost();
+
+  // Upload file to that remote host
+  const formData = new FormData();
+  formData.append('file', fs.createReadStream(filename));
+  formData.append('email', email);
 
   let response = await fetch(`${remoteHost}/file`, {
     method: 'POST',
-    headers: {
-      "Content-length": fileSizeInBytes
-    },
-    body: readStream
+    body: formData
   });
 
   const { ok, status } = response;
@@ -86,9 +88,48 @@ async function createRemoteFile(remoteHost, filename) {
 }
 
 
+/**
+ * Get file from remote file server
+ * GET <DIRECTORY_SERVICE>/filename
+ */
+async function getRemoteFile(filename) {
+
+  // Fetch the URL of the File Server that contains the file
+  let { ok, status, response } = await makeRequest(`${DIRECTORY_SERVICE}/remoteFile/${filename}`, "get");
+
+  if(!ok) {
+    logError(status, response);
+  }
+
+  const { remote } = response;
+
+  const file = fs.createWriteStream(`downloaded/${filename}`);
+
+  ({ ok, status, response } = await makeRequest(remote, "get"));
+  response.body.pipe(file);
+  file.close();
+
+}
 
 
+/***********************************************************************************************************************
+ * Helper Methods
+ **********************************************************************************************************************/
 
+
+/**
+ * Get Remote Node of File Server to upload to
+ * GET <DIRECTORY_SERVICE>/remoteHost
+ */
+async function getRemoteHost() {
+  const { ok, status, response } = await makeRequest(`${DIRECTORY_SERVICE}/remoteHost`, 'get');
+  if(!ok) {
+    logError(status, response);
+  }
+
+  console.log(`Received available remote host ${response.remote}`);
+  return response.remote;
+}
 
 
 /**
@@ -96,15 +137,14 @@ async function createRemoteFile(remoteHost, filename) {
  * @param endpoint URL to hit
  * @param method HTTP Verb
  * @param body (optional if POST/PUT)
- * @param stringify (optional if POST/PUT) JSON.stringify(body) or not
  * @returns {Promise.<{ok: *, status: *, response: *}>}
  */
-async function makeRequest(endpoint, method, body=null, stringify = true) {
+//TODO: Add auth token header
+async function makeRequest(endpoint, method, body) {
   const headers =  {'Content-Type': 'application/json'};
   let response;
   if(body) {
-    const body = stringify ? JSON.stringify(body) : body;
-    response = await fetch(endpoint, {method, body, headers});
+    response = await fetch(endpoint, {method, body: JSON.stringify(body), headers});
   } else {
     response = await fetch(endpoint, {method, headers})
   }
@@ -114,14 +154,18 @@ async function makeRequest(endpoint, method, body=null, stringify = true) {
   const contentType = response.headers.get("content-type");
   if(contentType && contentType.indexOf("application/json") !== -1) {
     response = await response.json();
-  } else {
-    response = await response.text();
   }
 
   return {ok, status, response}
 
 }
 
+
+/**
+ * Debug - Logs Errors and kills process
+ * @param status the status message of the request
+ * @param response the message sent down
+ */
 function logError(status, response) {
   console.error(`Error ${status}`);
   console.log(`${JSON.stringify(response)}`);
