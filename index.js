@@ -23,33 +23,69 @@ runClient();
 async function runClient() {
 
   // Register and push file
-  // console.log("Registering");
-  // await register(TEST_EMAIL, TEST_PASSWORD, TEST_NAME);
-  //
-  // console.log("Creating Remote stefano.txt");
-  // await createRemoteFile("stefano.txt", TEST_EMAIL);
+  console.log("Registering");
+  await register(TEST_EMAIL, TEST_PASSWORD, TEST_NAME);
 
-  // Push up cat.txt in postman
-
-  console.log("Downloading remote cat.txt");
-  await getRemoteFile("cat.txt");
+  console.log("Creating Remote stefano.txt");
+  await createRemoteFile("stefano.txt", TEST_EMAIL);
 
 
-  // Update that file on remote and pull down changes
-  // console.log("Updating remote stefano.txt to local stefano.txt");
-  // await updateRemoteFile("stefano.txt", "stefano.txt", TEST_EMAIL);
-  //
-  // console.log("Downloading remote dog.txt");
-  // await getRemoteFile("stefano.txt");
+  // Rename file on remote
+  console.log("Renaming remote stefano.txt to renamed.txt");
+  await testRename("stefano.txt", "rename.txt");
+
+  // Update that file on remote
+  console.log("Updating remote rename.txt");
+  await testUpdate("rename.txt");
 
 
+  // Rename back to stefano.txt
+  console.log("Renaming remote stefano.txt to renamed.txt");
+  await testRename("rename.txt", "stefano.txt");
 
-  // console.log("Updating remote stefano.txt to dog.txt");
-  // await updateRemoteFile("dog.txt", "stefano.txt", TEST_EMAIL);
+  // Update that file on remote
+  console.log("Updating remote stefano.txt");
+  await testUpdate("stefano.txt");
+
 
 }
 
 
+async function testUpdate(filename) {
+  const { _id, endpoint } = await getRemoteFileInfo(filename);
+
+  const lock = await acquireLock(_id, TEST_EMAIL);
+
+
+  fs.writeFile(localFile(filename), `Updated at ${Date().toLocaleString()}`, async (err) => {
+    if(err) {
+      return console.err(err);
+    }
+
+    console.log(`Locally updated ${filename}`);
+    await updateRemoteFile(endpoint, filename, TEST_EMAIL, lock);
+  });
+
+
+}
+
+async function testRename(oldFileName, newFileName) {
+
+  const { _id, endpoint } = await getRemoteFileInfo(oldFileName);
+
+  const lock = await acquireLock(_id, TEST_EMAIL);
+
+  await fs.rename(localFile(oldFileName), localFile(newFileName), (err) => {
+    if(err) return err;
+
+    console.log("NOTE: LOCAL RENAME IS ASYNC WITH REMOTE RENAME - SHOULDN'T CAUSE PROBLEMS?")
+    console.log(`Locally renamed ${oldFileName} to ${newFileName}`);
+  });
+
+
+
+  await updateRemoteFile(endpoint, newFileName, TEST_EMAIL, lock);
+}
 
 
 /***********************************************************************************************************************
@@ -122,21 +158,7 @@ async function createRemoteFile(filename, email) {
  * body: {email, file, lock}
  */
 // TODO: This doens't refresh our downloaded copy (or redownload the remote one) yet due to directory stuff
-async function updateRemoteFile(oldFileName, newFile, email) {
-
-  // Get remote URL from directory server
-  const { _id, endpoint } = await getRemoteFileInfo(oldFileName);
-
-
-  // Try to acquire a lock
-  let { ok, status, response } = await makeRequest(`${LOCK_SERVER}/lock/${_id}?email=${email}`, "get");
-  if(!ok || !response.granted) {
-    logError(status, response);
-  }
-
-  const { lock } = response;
-  console.log("Acquired Lock");
-
+async function updateRemoteFile(endpoint, newFile, email, lock) {
 
   //TODO: Refactor uploading a file into a function
 
@@ -155,19 +177,19 @@ async function updateRemoteFile(oldFileName, newFile, email) {
   formData.append('file', fs.createReadStream(file));
 
 
-  response = await fetch(`${endpoint}`, {
+  let response = await fetch(`${endpoint}`, {
     method: 'POST',
     body: formData
   });
 
-  ({ ok, status } = response);
+  const { ok, status } = response;
   response = await response.json();
 
   if(!ok) {
     logError(status, response);
   }
 
-  console.log(`Successfully updated ${oldFileName} to ${newFile}`);
+  console.log(`Successfully updated ${newFile}`);
 
 }
 
@@ -199,7 +221,17 @@ async function deleteRemoteFile() {
 
 }
 
+async function acquireLock(_id, email) {
 
+  // Try to acquire a lock
+  let { ok, status, response } = await makeRequest(`${LOCK_SERVER}/lock/${_id}?email=${email}`, "get");
+  if(!ok || !response.granted) {
+    logError(status, response);
+  }
+
+  console.log("Acquired Lock");
+  return response.lock;
+}
 /***********************************************************************************************************************
  * Helper Methods
  **********************************************************************************************************************/
@@ -233,6 +265,7 @@ async function getRemoteFileInfo(filename) {
     logError(status, response);
   }
 
+  console.log("GOT REMOTE INFO");
   return response;
 }
 
