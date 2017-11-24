@@ -12,6 +12,8 @@ const TEST_EMAIL = 'stefano@test.com';
 const TEST_NAME = 'Stefano';
 const TEST_PASSWORD = '1234';
 
+const FILES_DIR = __dirname + "/remoteFiles/";
+
 
 /***********************************************************************************************************************
  * Main
@@ -19,25 +21,31 @@ const TEST_PASSWORD = '1234';
 runClient();
 
 async function runClient() {
+
+  // Register and push file
   // console.log("Registering");
   // await register(TEST_EMAIL, TEST_PASSWORD, TEST_NAME);
   //
   // console.log("Creating Remote stefano.txt");
-  // await createRemoteFile("files/stefano.txt", TEST_EMAIL);
+  // await createRemoteFile("stefano.txt", TEST_EMAIL);
+
+  // Push up cat.txt in postman
+
+  console.log("Downloading remote cat.txt");
+  await getRemoteFile("cat.txt");
+
+
+  // Update that file on remote and pull down changes
+  // console.log("Updating remote stefano.txt to local stefano.txt");
+  // await updateRemoteFile("stefano.txt", "stefano.txt", TEST_EMAIL);
   //
-  // console.log("Downloading remote stefano.txt");
+  // console.log("Downloading remote dog.txt");
   // await getRemoteFile("stefano.txt");
-  //
+
+
+
   // console.log("Updating remote stefano.txt to dog.txt");
-  // await updateRemoteFile("stefano.txt", "files/dog.txt", TEST_EMAIL);
-
-
-
-  console.log("Downloading remote dog.txt");
-  await getRemoteFile("dog.txt");
-
-  console.log("Updating remote stefano.txt to dog.txt");
-  await updateRemoteFile("dog.txt", "files/stefano.txt", TEST_EMAIL);
+  // await updateRemoteFile("dog.txt", "stefano.txt", TEST_EMAIL);
 
 }
 
@@ -63,7 +71,6 @@ async function register(email, password, name) {
     logError(status, response);
   }
 
-
   console.log(`Successfully Logged in ${email}`);
   return ok;
 }
@@ -74,19 +81,25 @@ async function register(email, password, name) {
  * Create a File on the remote server
  * POST <remoteHost>/file
  * body{file, email}
- * @param filename name of file to fetch
- * @param email client's email
  */
 async function createRemoteFile(filename, email) {
 
-  // Get remote host from directory service
-  const remoteHost = await getRemoteHost();
+  // Get remote host ot upload to from directory service
+  const remoteHost = await getRemoteHostToUploadTo();
 
   //TODO: Refactor uploading a file into a function
   // Upload file to that remote host
   const formData = new FormData();
-  formData.append('file', fs.createReadStream(filename));
+
+  /*************************************
+   NOTE: File must be appended last
+   so server can use other posted params
+   in deciding filename
+   ************************************/
+  const file = localFile(filename);
   formData.append('email', email);
+  formData.append('filename', file);
+  formData.append('file', fs.createReadStream(file));
 
   let response = await fetch(`${remoteHost}/file`, {
     method: 'POST',
@@ -108,20 +121,15 @@ async function createRemoteFile(filename, email) {
  * POST <remote>/:_id
  * body: {email, file, lock}
  */
-// TODO: This doenst refresh our downloaded copy (or redownload the remote one) yet due to directory stuff
+// TODO: This doens't refresh our downloaded copy (or redownload the remote one) yet due to directory stuff
 async function updateRemoteFile(oldFileName, newFile, email) {
 
   // Get remote URL from directory server
-  let { ok, status, response } = await makeRequest(`${DIRECTORY_SERVICE}/remoteFile/${oldFileName}`, "get");
-  if(!ok) {
-    logError(status, response);
-  }
-
+  const { _id, endpoint } = await getRemoteFileInfo(oldFileName);
 
 
   // Try to acquire a lock
-  const { endpoint, _id } = response;
-  ({ ok, status, response } = await makeRequest(`${LOCK_SERVER}/lock/${_id}?email=${email}`, "get"));
+  let { ok, status, response } = await makeRequest(`${LOCK_SERVER}/lock/${_id}?email=${email}`, "get");
   if(!ok || !response.granted) {
     logError(status, response);
   }
@@ -129,12 +137,23 @@ async function updateRemoteFile(oldFileName, newFile, email) {
   const { lock } = response;
   console.log("Acquired Lock");
 
-  // Now have lock and can push updated file
+
   //TODO: Refactor uploading a file into a function
+
+  /*************************************
+   NOTE: File must be appended last
+   so server can use other posted params
+   in deciding filename
+   ************************************/
+
+  // Now have lock and can push updated file
   const formData = new FormData();
-  formData.append('file', fs.createReadStream(newFile));
+  const file = localFile(newFile);
   formData.append('email', email);
   formData.append('lock', lock);
+  formData.append('filename', file);
+  formData.append('file', fs.createReadStream(file));
+
 
   response = await fetch(`${endpoint}`, {
     method: 'POST',
@@ -158,22 +177,21 @@ async function updateRemoteFile(oldFileName, newFile, email) {
  */
 async function getRemoteFile(filename) {
 
-  // Fetch the URL of the File Server that contains the file
-  let { ok, status, response } = await makeRequest(`${DIRECTORY_SERVICE}/remoteFile/${filename}`, "get");
+  const { _id, endpoint } = await getRemoteFileInfo(filename);
 
+  const file = fs.createWriteStream(localFile(filename), {flags: 'w'});
+
+
+  // TODO: Check proper Stream procedure (closing etc)
+  const { ok, status, response } = await makeRequest(endpoint, "get");
   if(!ok) {
     logError(status, response);
   }
 
-  const { endpoint, _id } = response;
-
-  const file = fs.createWriteStream(`downloaded/${filename}`);
-
-
-  // TODO: Check proper Stream procedure (closing etc)
-  ({ ok, status, response } = await makeRequest(endpoint, "get"));
-  response.body.pipe(file);
-  // file.close();
+  await new Promise(resolve => {
+    response.body.pipe(file)
+      .on('finish', resolve)
+  });
 
 }
 
@@ -191,7 +209,7 @@ async function deleteRemoteFile() {
  * Get Remote Node of File Server to upload to
  * GET <DIRECTORY_SERVICE>/remoteHost
  */
-async function getRemoteHost() {
+async function getRemoteHostToUploadTo() {
   const { ok, status, response } = await makeRequest(`${DIRECTORY_SERVICE}/remoteHost`, 'get');
   if(!ok) {
     logError(status, response);
@@ -199,6 +217,23 @@ async function getRemoteHost() {
 
   console.log(`Received available remote host ${response.remote}`);
   return response.remote;
+}
+
+/**
+ * Gets the remote endpoint and file _id of the local file
+ * @param filename the file of interest
+ * @returns {_id, endpoint}
+ */
+async function getRemoteFileInfo(filename) {
+  // Fetch the URL of the File Server that contains the file
+  const queryParam = `?filename=${encodeURIComponent(localFile(filename))}`;
+  let { ok, status, response } = await makeRequest(`${DIRECTORY_SERVICE}/remoteFile${queryParam}`, "get");
+
+  if(!ok) {
+    logError(status, response);
+  }
+
+  return response;
 }
 
 
@@ -232,12 +267,23 @@ async function makeRequest(endpoint, method, body) {
 
 
 /**
+ * Builds the full path to the REMOTE_FILES folder and the specified file.
+ * @param filename the filename (can be subdirectories) of interest
+ * @returns {string} the resolved path
+ */
+function localFile(filename) {
+  return `${FILES_DIR}${filename}`;
+}
+
+
+
+/**
  * Debug - Logs Errors and kills process
  * @param status the status message of the request
  * @param response the message sent down
  */
 function logError(status, response) {
   console.error(`Error ${status}`);
-  console.log(`${JSON.stringify(response)}`);
+  console.log(`${response.message ? response.message : JSON.stringify(response)}`);
   process.exit();
 }
