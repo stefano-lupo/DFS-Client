@@ -25,6 +25,7 @@ const encryption = {
   encryptedEncoding: process.env.ENCRYPTED_ENCODING
 };
 
+let ticket, sessionKey;
 
 
 /***********************************************************************************************************************
@@ -36,7 +37,8 @@ async function runClient() {
 
   // const clientKey = await register(TEST_EMAIL, TEST_PASSWORD, TEST_NAME);
 
-  await login(TEST_EMAIL, TEST_PASSWORD);
+  ({ ticket, sessionKey } = await login(TEST_EMAIL, TEST_PASSWORD));
+  console.log(ticket, sessionKey);
 
   // Register and push file
   // console.log("Registering");
@@ -157,14 +159,16 @@ async function login(email, password) {
   console.log(sessionKey, "\n\n");
 
   // Debug, just verifying ticket is correct
-  console.log(`DEBUG: Verifying given ticket is valid\n`);
-  ({ ok, response, status } = await makeRequest(`${SECURITY_SERVICE}/verifyTicket`, "post", {ticket}));
+  // console.log(`DEBUG: Verifying given ticket is valid\n`);
+  // ({ ok, response, status } = await makeRequest(`${SECURITY_SERVICE}/verifyTicket`, "post", {ticket}));
+  //
+  // if(!ok) {
+  //   logError(status, response);
+  // }
+  //
+  // console.log(response);
 
-  if(!ok) {
-    logError(status, response);
-  }
-
-  console.log(response);
+  return {ticket, sessionKey};
 }
 
 
@@ -297,10 +301,15 @@ async function deleteRemoteFile() {
 
 }
 
+
+/**
+ * Acquire a lock for a file
+ * GET <LOCKING_SERVER>/lock/<_id>
+ */
 async function acquireLock(_id, email) {
 
   // Try to acquire a lock
-  let { ok, status, response } = await makeRequest(`${LOCK_SERVER}/lock/${_id}?email=${email}`, "get");
+  let { ok, status, response } = await makeRequest(`${LOCK_SERVER}/lock/${_id}`, "get");
   if(!ok || !response.granted) {
     logError(status, response);
   }
@@ -308,6 +317,15 @@ async function acquireLock(_id, email) {
   console.log("Acquired Lock");
   return response.lock;
 }
+
+
+
+
+
+
+
+
+
 /***********************************************************************************************************************
  * Helper Methods
  **********************************************************************************************************************/
@@ -355,10 +373,18 @@ async function getRemoteFileInfo(filename) {
  */
 //TODO: Add auth token header
 async function makeRequest(endpoint, method, body) {
-  const headers =  {'Content-Type': 'application/json'};
+  const headers =  {'Content-Type': 'application/json', 'Authorization': ticket};
   let response;
   if(body) {
-    response = await fetch(endpoint, {method, body: JSON.stringify(body), headers});
+    if(sessionKey) {
+      response = await fetch(endpoint, {
+        method,
+        body: {encrypted: encrypt(JSON.stringify(body), encryption, sessionKey)},
+        headers
+      });
+    } else {
+      response = await fetch(endpoint, {method, body: JSON.stringify(body), headers});
+    }
   } else {
     response = await fetch(endpoint, {method, headers})
   }
