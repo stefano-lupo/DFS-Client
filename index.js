@@ -1,9 +1,10 @@
 import fetch from 'node-fetch';
 import fs from 'fs'
 import FormData from 'form-data';
+import crypto from 'crypto';
 
 
-// const FILE_SERVER = "http://localhost:3000";   // shouldn't need to know where this is
+const SECURITY_SERVICE = "http://localhost:3003";   // shouldn't need to know where this is
 const DIRECTORY_SERVICE = "http://localhost:3001";
 const LOCK_SERVER = "http://192.168.1.17:3002";
 // const LOCK_SERVER = "http://localhost:3002";
@@ -12,7 +13,18 @@ const TEST_EMAIL = 'stefano@test.com';
 const TEST_NAME = 'Stefano';
 const TEST_PASSWORD = '1234';
 
-const FILES_DIR = __dirname + "/remoteFiles/";
+const FILES_DIR = `${__dirname}/remoteFiles/`;
+const CLIENT_KEY = `${__dirname}/clientKey.txt`;
+
+
+// Initialize .env
+require('dotenv').config();
+const encryption = {
+  algorithm: process.env.SYMMETRIC_ENCRYPTION,
+  plainEncoding: process.env.PLAIN_ENCODING,
+  encryptedEncoding: process.env.ENCRYPTED_ENCODING
+};
+
 
 
 /***********************************************************************************************************************
@@ -22,31 +34,34 @@ runClient();
 
 async function runClient() {
 
+  // const clientKey = await register(TEST_EMAIL, TEST_PASSWORD, TEST_NAME);
+
+  await login(TEST_EMAIL, TEST_PASSWORD);
+
   // Register and push file
-  console.log("Registering");
-  await register(TEST_EMAIL, TEST_PASSWORD, TEST_NAME);
-
-  console.log("Creating Remote stefano.txt");
-  await createRemoteFile("stefano.txt", TEST_EMAIL);
-
-
-  // Rename file on remote
-  console.log("Renaming remote stefano.txt to renamed.txt");
-  await testRename("stefano.txt", "rename.txt");
-
-  // Update that file on remote
-  console.log("Updating remote rename.txt");
-  await testUpdate("rename.txt");
-
-
-  // Rename back to stefano.txt
-  console.log("Renaming remote stefano.txt to renamed.txt");
-  await testRename("rename.txt", "stefano.txt");
-
-  // Update that file on remote
-  console.log("Updating remote stefano.txt");
-  await testUpdate("stefano.txt");
-
+  // console.log("Registering");
+  // await registerWithDirectoryService(TEST_EMAIL, TEST_PASSWORD, TEST_NAME);
+  //
+  // console.log("Creating Remote stefano.txt");
+  // await createRemoteFile("stefano.txt", TEST_EMAIL);
+  //
+  //
+  // // Rename file on remote
+  // console.log("Renaming remote stefano.txt to renamed.txt");
+  // await testRename("stefano.txt", "rename.txt");
+  //
+  // // Update that file on remote
+  // console.log("Updating remote rename.txt");
+  // await testUpdate("rename.txt");
+  //
+  //
+  // // Rename back to stefano.txt
+  // console.log("Renaming remote stefano.txt to renamed.txt");
+  // await testRename("rename.txt", "stefano.txt");
+  //
+  // // Update that file on remote
+  // console.log("Updating remote stefano.txt");
+  // await testUpdate("stefano.txt");
 
 }
 
@@ -59,7 +74,7 @@ async function testUpdate(filename) {
 
   fs.writeFile(localFile(filename), `Updated at ${Date().toLocaleString()}`, async (err) => {
     if(err) {
-      return console.err(err);
+      return console.error(err);
     }
 
     console.log(`Locally updated ${filename}`);
@@ -93,6 +108,67 @@ async function testRename(oldFileName, newFileName) {
  **********************************************************************************************************************/
 
 /**
+ * Register for an account with security service
+ * POST <SECURITY_SERVICE>/register
+ * body: {email, password, name}
+ */
+async function register(email, password, name) {
+  const { ok, status, response } = await makeRequest(`${SECURITY_SERVICE}/register`, "post", {email, name, password});
+  if(!ok) {
+    logError(status, response);
+  }
+
+  const { clientKey } = response;
+  fs.writeFile(CLIENT_KEY, clientKey, async (err) => {
+    if(err) {
+      return console.error(err);
+    }
+
+    console.log(`Saved Client Key`);
+  });
+
+  return clientKey;
+}
+
+
+/**
+ * Login to the security service
+ * POST <SECURITY_SERVICE>/login?email=<email>
+ * body: {encrypted: encrypt(password)}
+ * @returns {Promise.<void>}
+ */
+async function login(email, password) {
+  const clientKey = fs.readFileSync(CLIENT_KEY, {encoding: 'utf-8'});
+  const encrypted = encrypt(password, encryption, clientKey);
+
+  let { ok, status, response } = await makeRequest(`${SECURITY_SERVICE}/login?email=${email}`, "post", {encrypted})
+  if(!ok) {
+    logError(status, response);
+  }
+
+  const { token } = response;
+  const decrypted = decrypt(token, encryption, clientKey);
+  const { ticket, sessionKey } = JSON.parse(decrypted);
+
+  console.log("Ticket given: ");
+  console.log(ticket, "\n");
+
+  console.log("Session key given: ");
+  console.log(sessionKey, "\n\n");
+
+  // Debug, just verifying ticket is correct
+  console.log(`DEBUG: Verifying given ticket is valid\n`);
+  ({ ok, response, status } = await makeRequest(`${SECURITY_SERVICE}/verifyTicket`, "post", {ticket}));
+
+  if(!ok) {
+    logError(status, response);
+  }
+
+  console.log(response);
+}
+
+
+/**
  * Register with directory service
  * POST <DIRECTORY_SERVICE>/register
  * body {email, password, name}
@@ -101,7 +177,7 @@ async function testRename(oldFileName, newFileName) {
  * @param name
  * @returns {Promise.<*>}
  */
-async function register(email, password, name) {
+async function registerWithDirectoryService(email, password, name) {
   const { ok, status, response } = await makeRequest(`${DIRECTORY_SERVICE}/register`, "post", {email, password, name});
   if(!ok) {
     logError(status, response);
@@ -309,6 +385,27 @@ function localFile(filename) {
 }
 
 
+function encrypt(data, encryption, key) {
+  const { algorithm,  plainEncoding, encryptedEncoding} = encryption;
+  const cipher = crypto.createCipher(algorithm, key);
+  let ciphered = cipher.update(data, plainEncoding, encryptedEncoding);
+  ciphered += cipher.final(encryptedEncoding);
+  // console.log(`Encrypted ${data}: ${ciphered}`);
+
+  return ciphered;
+}
+
+function decrypt(data, encryption, expectedKey) {
+  const { algorithm, generationKey, plainEncoding, encryptedEncoding} = encryption;
+
+  const decipher = crypto.createDecipher(algorithm, expectedKey);
+  let deciphered = decipher.update(data, encryptedEncoding, plainEncoding);
+  deciphered += decipher.final(plainEncoding);
+  // console.log(`Decrypted ${data}: ${deciphered}`);
+
+  return deciphered
+}
+
 
 /**
  * Debug - Logs Errors and kills process
@@ -320,3 +417,4 @@ function logError(status, response) {
   console.log(`${response.message ? response.message : JSON.stringify(response)}`);
   process.exit();
 }
+
