@@ -5,6 +5,7 @@ import { localFile } from './lib/util';
 import { register, login } from './lib/securityService';
 import { getRemoteFiles } from './lib/directoryService';
 import { createRemoteFile, updateRemoteFile, renameRemoteFile, deleteRemoteFile, getRemoteFile } from './lib/remoteFileSystem';
+import { subscribeToFile, unsubscribeToFile } from './lib/cachingService';
 
 const TEST_EMAIL = 'stefano@test.com';
 const TEST_NAME = 'Stefano';
@@ -30,7 +31,6 @@ async function runClient() {
   console.log();
 
 
-
   /***************************************************************************
    * Create Remote Files
    ***************************************************************************/
@@ -41,10 +41,23 @@ async function runClient() {
   console.log();
 
 
+  // Subscribe to remote file
+  console.log("Subscribing to remote stefano.txt");
+  await subscribeToFile("stefano.txt");
+  console.log();
+
+
   // Create remote file
   console.log("Creating Remote cat.txt");
   await createRemoteFile("cat.txt");
   console.log();
+
+
+  // Subscribe to remote file
+  console.log("Subscribing to remote cat.txt");
+  await subscribeToFile("cat.txt");
+  console.log();
+
 
 
   // Get My remote files from directory service
