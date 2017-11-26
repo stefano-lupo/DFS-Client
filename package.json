@@ -5,10 +5,9 @@
   "main": "index.js",
   "scripts": {
     "build": "rimraf dist/ && babel ./ --out-dir dist/ --ignore ./node_modules,./.babelrc,./package.json,./npm-debug.log --copy-files",
-    "start": "nodemon index.js --exec babel-node --presets es2015",
-    "sync": "babel-node migrations/createTables.js"
+    "start": "nodemon test.js --exec babel-node --presets es2015"
   },
-  "author": "",
+  "author": "Stefano Lupo",
   "license": "ISC",
   "dependencies": {
     "dotenv": "^4.0.0",
