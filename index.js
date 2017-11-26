@@ -4,10 +4,9 @@ import FormData from 'form-data';
 import crypto from 'crypto';
 
 
-const SECURITY_SERVICE = "http://localhost:3003";   // shouldn't need to know where this is
+const SECURITY_SERVICE = "http://localhost:3003";
 const DIRECTORY_SERVICE = "http://localhost:3001";
-const LOCK_SERVER = "http://192.168.1.17:3002";
-// const LOCK_SERVER = "http://localhost:3002";
+const LOCK_SERVER = "http://localhost:3002";
 
 const TEST_EMAIL = 'stefano@test.com';
 const TEST_NAME = 'Stefano';
@@ -25,6 +24,7 @@ const encryption = {
   encryptedEncoding: process.env.ENCRYPTED_ENCODING
 };
 
+let ticket, sessionKey;
 
 
 /***********************************************************************************************************************
@@ -34,72 +34,120 @@ runClient();
 
 async function runClient() {
 
-  // const clientKey = await register(TEST_EMAIL, TEST_PASSWORD, TEST_NAME);
+  /***************************************************************************
+   * Register / Login first
+   ****************************************************************************/
+  // Register with security service
+  console.log(`Registering ${TEST_EMAIL} with security service`);
+  await register(TEST_EMAIL, TEST_PASSWORD, TEST_NAME);
+  console.log();
 
-  await login(TEST_EMAIL, TEST_PASSWORD);
 
-  // Register and push file
-  // console.log("Registering");
-  // await registerWithDirectoryService(TEST_EMAIL, TEST_PASSWORD, TEST_NAME);
-  //
-  // console.log("Creating Remote stefano.txt");
-  // await createRemoteFile("stefano.txt", TEST_EMAIL);
-  //
-  //
-  // // Rename file on remote
-  // console.log("Renaming remote stefano.txt to renamed.txt");
-  // await testRename("stefano.txt", "rename.txt");
-  //
-  // // Update that file on remote
-  // console.log("Updating remote rename.txt");
-  // await testUpdate("rename.txt");
-  //
-  //
-  // // Rename back to stefano.txt
-  // console.log("Renaming remote stefano.txt to renamed.txt");
-  // await testRename("rename.txt", "stefano.txt");
-  //
-  // // Update that file on remote
-  // console.log("Updating remote stefano.txt");
-  // await testUpdate("stefano.txt");
+  // Login to security service
+  console.log(`Logging ${TEST_EMAIL} into the security service`);
+  ({ ticket, sessionKey } = await login(TEST_EMAIL, TEST_PASSWORD));
+  console.log();
+
+
+  // Create remote file
+  console.log("Creating Remote stefano.txt");
+  await createRemoteFile("stefano.txt", false);
+  console.log();
+
+
+  // Create remote file
+  console.log("Creating Remote cat.txt");
+  await createRemoteFile("cat.txt");
+  console.log();
+
+
+  // Get My remote files from directory service
+  console.log(`Getting Remote files`);
+  await getRemoteFiles();
+  console.log();
+
+
+  // Rename file on remote
+  console.log("Renaming remote stefano.txt to renamed.txt");
+  await testRename("stefano.txt", "rename.txt");
+  console.log();
+
+
+  // Update that file on remote
+  console.log("Updating remote rename.txt");
+  await testUpdate("rename.txt");
+  console.log();
+
+
+  // Rename back to stefano.txt
+  console.log("Renaming remote renamed.txt back to stefano.txt");
+  await testRename("rename.txt", "stefano.txt");
+  console.log();
+
+
+  // Update that file on remote
+  console.log("Updating remote stefano.txt");
+  await testUpdate("stefano.txt");
+  console.log();
+
+
+  // Delete that file locally
+  console.log(`Deleting stefano.txt locally`);
+  fs.unlinkSync(localFile("stefano.txt"));
+  console.log();
+
+  // Retrieve that file from remote
+  console.log(`Getting stefano.txt from remote`);
+  await getRemoteFile("stefano.txt");
+  console.log();
+
+
+  // Ensure it was retrieved correctly
+  console.log(`Reading stefano.txt locally: `);
+  const fileStr = fs.readFileSync(localFile("stefano.txt"), {encoding: 'utf-8'});
+  console.log(fileStr, "\n");
+
+
+  // Delete file on remote
+  console.log("Deleting remote cat.txt");
+  await deleteRemoteFile("cat.txt");
+  console.log();
+
+
+  // Get My remote files from directory service
+  console.log(`Getting Remote files`);
+  await getRemoteFiles();
+  console.log();
 
 }
 
+
+/***********************************************************************************************************************
+ * Test methods
+ **********************************************************************************************************************/
 
 async function testUpdate(filename) {
   const { _id, endpoint } = await getRemoteFileInfo(filename);
 
-  const lock = await acquireLock(_id, TEST_EMAIL);
+  const lock = await acquireLock(_id);
 
+  fs.writeFileSync(localFile(filename), `Updated at ${new Date().toLocaleString()}`);
 
-  fs.writeFile(localFile(filename), `Updated at ${Date().toLocaleString()}`, async (err) => {
-    if(err) {
-      return console.error(err);
-    }
-
-    console.log(`Locally updated ${filename}`);
-    await updateRemoteFile(endpoint, filename, TEST_EMAIL, lock);
-  });
-
+  console.log(`Locally updated ${filename}`);
+  await updateRemoteFile(endpoint, filename, lock);
 
 }
 
-async function testRename(oldFileName, newFileName) {
 
+async function testRename(oldFileName, newFileName) {
   const { _id, endpoint } = await getRemoteFileInfo(oldFileName);
 
-  const lock = await acquireLock(_id, TEST_EMAIL);
+  const lock = await acquireLock(_id);
 
-  await fs.rename(localFile(oldFileName), localFile(newFileName), (err) => {
-    if(err) return err;
+  fs.renameSync(localFile(oldFileName), localFile(newFileName));
+  console.log(`Locally renamed ${oldFileName} to ${newFileName}`);
 
-    console.log("NOTE: LOCAL RENAME IS ASYNC WITH REMOTE RENAME - SHOULDN'T CAUSE PROBLEMS?")
-    console.log(`Locally renamed ${oldFileName} to ${newFileName}`);
-  });
-
-
-
-  await updateRemoteFile(endpoint, newFileName, TEST_EMAIL, lock);
+  await updateRemoteFile(endpoint, newFileName, lock);
 }
 
 
@@ -119,13 +167,8 @@ async function register(email, password, name) {
   }
 
   const { clientKey } = response;
-  fs.writeFile(CLIENT_KEY, clientKey, async (err) => {
-    if(err) {
-      return console.error(err);
-    }
-
-    console.log(`Saved Client Key`);
-  });
+  fs.writeFileSync(CLIENT_KEY, clientKey);
+  console.log(`Saved Client Key`);
 
   return clientKey;
 }
@@ -154,12 +197,28 @@ async function login(email, password) {
   console.log(ticket, "\n");
 
   console.log("Session key given: ");
-  console.log(sessionKey, "\n\n");
+  console.log(sessionKey);
 
   // Debug, just verifying ticket is correct
-  console.log(`DEBUG: Verifying given ticket is valid\n`);
-  ({ ok, response, status } = await makeRequest(`${SECURITY_SERVICE}/verifyTicket`, "post", {ticket}));
+  // console.log(`DEBUG: Verifying given ticket is valid\n`);
+  // ({ ok, response, status } = await makeRequest(`${SECURITY_SERVICE}/verifyTicket`, "post", {ticket}));
+  //
+  // if(!ok) {
+  //   logError(status, response);
+  // }
+  //
+  // console.log(response);
 
+  return {ticket, sessionKey};
+}
+
+
+/**
+ * Gets all of the remote files we have stored across all nodes
+ * GET <DIRECTORY_SERVICE>/remoteFiles
+ */
+async function getRemoteFiles() {
+  const { ok, status, response } = await makeRequest(`${DIRECTORY_SERVICE}/remoteFiles`, "get");
   if(!ok) {
     logError(status, response);
   }
@@ -168,25 +227,6 @@ async function login(email, password) {
 }
 
 
-/**
- * Register with directory service
- * POST <DIRECTORY_SERVICE>/register
- * body {email, password, name}
- * @param email
- * @param password
- * @param name
- * @returns {Promise.<*>}
- */
-async function registerWithDirectoryService(email, password, name) {
-  const { ok, status, response } = await makeRequest(`${DIRECTORY_SERVICE}/register`, "post", {email, password, name});
-  if(!ok) {
-    logError(status, response);
-  }
-
-  console.log(`Successfully Logged in ${email}`);
-  return ok;
-}
-
 
 
 /**
@@ -194,7 +234,7 @@ async function registerWithDirectoryService(email, password, name) {
  * POST <remoteHost>/file
  * body{file, email}
  */
-async function createRemoteFile(filename, email) {
+async function createRemoteFile(filename, isPrivate=true) {
 
   // Get remote host ot upload to from directory service
   const remoteHost = await getRemoteHostToUploadTo();
@@ -209,11 +249,12 @@ async function createRemoteFile(filename, email) {
    in deciding filename
    ************************************/
   const file = localFile(filename);
-  formData.append('email', email);
   formData.append('filename', file);
+  formData.append('isPrivate', JSON.stringify(isPrivate));
   formData.append('file', fs.createReadStream(file));
 
   let response = await fetch(`${remoteHost}/file`, {
+    headers: { 'Authorization': ticket},
     method: 'POST',
     body: formData
   });
@@ -231,10 +272,9 @@ async function createRemoteFile(filename, email) {
 /**
  * Update remote file on file server
  * POST <remote>/:_id
- * body: {email, file, lock}
+ * body: {file, lock}
  */
-// TODO: This doens't refresh our downloaded copy (or redownload the remote one) yet due to directory stuff
-async function updateRemoteFile(endpoint, newFile, email, lock) {
+async function updateRemoteFile(endpoint, newFile, lock) {
 
   //TODO: Refactor uploading a file into a function
 
@@ -247,13 +287,13 @@ async function updateRemoteFile(endpoint, newFile, email, lock) {
   // Now have lock and can push updated file
   const formData = new FormData();
   const file = localFile(newFile);
-  formData.append('email', email);
   formData.append('lock', lock);
   formData.append('filename', file);
   formData.append('file', fs.createReadStream(file));
 
 
   let response = await fetch(`${endpoint}`, {
+    headers: { 'Authorization': ticket},
     method: 'POST',
     body: formData
   });
@@ -268,6 +308,13 @@ async function updateRemoteFile(endpoint, newFile, email, lock) {
   console.log(`Successfully updated ${newFile}`);
 
 }
+
+
+//TODO: This would be nice to implement - need to store who owns file, who has access to file etc
+async function updateFilePrivacy(filename, isPrivate) {
+
+}
+
 
 /**
  * Get file from remote file server
@@ -293,21 +340,47 @@ async function getRemoteFile(filename) {
 
 }
 
-async function deleteRemoteFile() {
 
+/**
+ * Deletes a file off the remote server
+ * DELETE <remoteHost>/:id
+ */
+async function deleteRemoteFile(filename) {
+  const { _id, endpoint } = await getRemoteFileInfo(filename);
+
+  const { ok, status, response } = await makeRequest(endpoint, "delete");
+  if(!ok) {
+    logError(status, response);
+  }
+
+  console.log(response);
 }
 
-async function acquireLock(_id, email) {
+
+/**
+ * Acquire a lock for a file
+ * GET <LOCKING_SERVER>/lock/<_id>
+ */
+async function acquireLock(_id) {
 
   // Try to acquire a lock
-  let { ok, status, response } = await makeRequest(`${LOCK_SERVER}/lock/${_id}?email=${email}`, "get");
+  let { ok, status, response } = await makeRequest(`${LOCK_SERVER}/lock/${_id}`, "get");
   if(!ok || !response.granted) {
     logError(status, response);
   }
 
-  console.log("Acquired Lock");
+  console.log(`Acquired Lock ${response.lock}`);
   return response.lock;
 }
+
+
+
+
+
+
+
+
+
 /***********************************************************************************************************************
  * Helper Methods
  **********************************************************************************************************************/
@@ -341,7 +414,6 @@ async function getRemoteFileInfo(filename) {
     logError(status, response);
   }
 
-  console.log("GOT REMOTE INFO");
   return response;
 }
 
@@ -353,12 +425,22 @@ async function getRemoteFileInfo(filename) {
  * @param body (optional if POST/PUT)
  * @returns {Promise.<{ok: *, status: *, response: *}>}
  */
-//TODO: Add auth token header
 async function makeRequest(endpoint, method, body) {
-  const headers =  {'Content-Type': 'application/json'};
+  const headers =  {'Content-Type': 'application/json', 'Authorization': ticket};
   let response;
   if(body) {
-    response = await fetch(endpoint, {method, body: JSON.stringify(body), headers});
+    if(sessionKey) {
+      console.log("MAKING REQUEST: ENCRYPTING");
+      const encrypted = encrypt(JSON.stringify(body), encryption, sessionKey);
+      response = await fetch(endpoint, {
+        method,
+        body: JSON.stringify({encrypted: encrypted}),   // hacky but body: {encrypted} doesnt work
+        headers
+
+      });
+    } else {
+      response = await fetch(endpoint, {method, body: JSON.stringify(body), headers});
+    }
   } else {
     response = await fetch(endpoint, {method, headers})
   }
