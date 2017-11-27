@@ -20,9 +20,9 @@ async function runClient() {
    * Register / Login first
    ***************************************************************************/
   // Register with security service
-  // console.log(`Registering ${TEST_EMAIL} with security service`);
-  // await register(TEST_EMAIL, TEST_PASSWORD, TEST_NAME);
-  // console.log();
+  console.log(`Registering ${TEST_EMAIL} with security service`);
+  await register(TEST_EMAIL, TEST_PASSWORD, TEST_NAME);
+  console.log();
 
 
 
@@ -53,7 +53,6 @@ async function runClient() {
   console.log();
 
 
-
   // Create remote file
   console.log("Creating Remote cat.txt");
   await createRemoteFile("cat.txt");
@@ -67,10 +66,9 @@ async function runClient() {
 
 
   // Get My remote files from directory service
-  // console.log(`Getting Remote files`);
-  // await getRemoteFiles();
-  // console.log();
-
+  console.log(`Getting Remote files`);
+  await getRemoteFiles();
+  console.log();
 
 
   /***************************************************************************
@@ -81,6 +79,7 @@ async function runClient() {
   console.log("Updating stefano.txt locally");
   await localUpdate("stefano.txt");
   console.log();
+
 
   // Update that file on remote
   console.log("Updating remote stefano.txt");
