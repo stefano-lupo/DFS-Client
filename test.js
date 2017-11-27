@@ -5,7 +5,7 @@ import { localFile } from './lib/util';
 import { register, login } from './lib/securityService';
 import { getRemoteFiles } from './lib/directoryService';
 import { createRemoteFile, updateRemoteFile, renameRemoteFile, deleteRemoteFile, getRemoteFile } from './lib/remoteFileSystem';
-import { subscribeToFile, unsubscribeToFile } from './lib/cachingService';
+import { connectToCachingServer, subscribeToFile, unsubscribeToFile } from './lib/cachingService';
 
 const TEST_EMAIL = 'stefano@test.com';
 const TEST_NAME = 'Stefano';
@@ -20,14 +20,20 @@ async function runClient() {
    * Register / Login first
    ***************************************************************************/
   // Register with security service
-  console.log(`Registering ${TEST_EMAIL} with security service`);
-  await register(TEST_EMAIL, TEST_PASSWORD, TEST_NAME);
-  console.log();
+  // console.log(`Registering ${TEST_EMAIL} with security service`);
+  // await register(TEST_EMAIL, TEST_PASSWORD, TEST_NAME);
+  // console.log();
+
 
 
   // Login to security service
   console.log(`Logging ${TEST_EMAIL} into the security service`);
   await login(TEST_EMAIL, TEST_PASSWORD);
+  console.log();
+
+  // Connect to the caching server
+  console.log(`Connecting to caching server`);
+  await connectToCachingServer();
   console.log();
 
 
@@ -47,6 +53,7 @@ async function runClient() {
   console.log();
 
 
+
   // Create remote file
   console.log("Creating Remote cat.txt");
   await createRemoteFile("cat.txt");
@@ -59,11 +66,10 @@ async function runClient() {
   console.log();
 
 
-
   // Get My remote files from directory service
-  console.log(`Getting Remote files`);
-  await getRemoteFiles();
-  console.log();
+  // console.log(`Getting Remote files`);
+  // await getRemoteFiles();
+  // console.log();
 
 
 
@@ -139,12 +145,14 @@ async function runClient() {
 
 
   /***************************************************************************
-   * Reset files for subsequent tests remote files
+   * Clean up and reset files for subsequent tests remote files
    ***************************************************************************/
   // Rename file locally
   console.log("Renaming renamed.txt to cat.txt locally");
   await localRename("renamed.txt", "cat.txt");
   console.log();
+
+
 
 
 }
