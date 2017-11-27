@@ -5,7 +5,7 @@ import { localFile } from './lib/util';
 import { register, login } from './lib/securityService';
 import { getRemoteFiles } from './lib/directoryService';
 import { createRemoteFile, updateRemoteFile, renameRemoteFile, deleteRemoteFile, getRemoteFile } from './lib/remoteFileSystem';
-import { connectToCachingServer, subscribeToFile, unsubscribeToFile } from './lib/cachingService';
+import { connectToCachingServer, subscribeToFile, unsubscribeToFile, disconnectFromCachingServer } from './lib/cachingService';
 
 const TEST_EMAIL = 'stefano@test.com';
 const TEST_NAME = 'Stefano';
@@ -153,6 +153,10 @@ async function runClient() {
   console.log();
 
 
+  // Disconnect (gracefully) from caching server
+  console.log("Disconnecting from caching server");
+  disconnectFromCachingServer();
+  console.log();
 
 
 }
