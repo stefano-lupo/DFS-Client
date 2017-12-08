@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "build": "rimraf dist/ && babel ./ --out-dir dist/ --ignore ./node_modules,./.babelrc,./package.json,./npm-debug.log --copy-files",
-    "start": "nodemon test.js --exec babel-node --presets es2015"
+    "nodemon": "nodemon test.js --exec babel-node",
+    "stefano": "babel-node stefanoTest.js stefano@test.com Stefano 1234",
+    "frank": "babel-node frankTest.js frank@test.com Frank frankyy "
   },
   "author": "Stefano Lupo",
   "license": "ISC",

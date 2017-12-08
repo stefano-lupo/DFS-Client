@@ -7,14 +7,31 @@ import { getRemoteFiles } from './lib/directoryService';
 import { createRemoteFile, updateRemoteFile, renameRemoteFile, deleteRemoteFile, getRemoteFile } from './lib/remoteFileSystem';
 import { connectToCachingServer, subscribeToFile, unsubscribeToFile, disconnectFromCachingServer } from './lib/cachingService';
 
-const TEST_EMAIL = 'stefano@test.com';
-const TEST_NAME = 'Stefano';
-const TEST_PASSWORD = '1234';
+const TEST_EMAIL = process.argv[2] || 'stefano@test.com';
+const TEST_NAME = process.argv[3] || 'Stefano';
+const TEST_PASSWORD = process.argv[4] || '1234';
+
+const stdin = process.stdin;
+stdin.setRawMode(true);
+stdin.resume();
+stdin.setEncoding('utf8');
+
+function waitForKeyPress(message) {
+  console.log(`\nPress any key to: ${message}\n`);
+  return new Promise(resolve => {
+    stdin.on('data', (data) => {
+      data === 'q' ? process.exit() : resolve();
+    });
+  });
+}
+
 
 // Wrap client in async function
 runClient();
 
 async function runClient() {
+
+  await waitForKeyPress("Register/Login");
 
   /***************************************************************************
    * Register / Login first
@@ -23,8 +40,6 @@ async function runClient() {
   console.log(`Registering ${TEST_EMAIL} with security service`);
   await register(TEST_EMAIL, TEST_PASSWORD, TEST_NAME);
   console.log();
-
-
 
   // Login to security service
   console.log(`Logging ${TEST_EMAIL} into the security service`);
@@ -41,6 +56,7 @@ async function runClient() {
    * Create Remote Files
    ***************************************************************************/
 
+  await waitForKeyPress("Create stefano.txt");
   // Create remote file
   console.log("Creating Remote stefano.txt");
   await createRemoteFile("stefano.txt", false);
@@ -53,6 +69,7 @@ async function runClient() {
   console.log();
 
 
+  await waitForKeyPress("Create cat.txt");
   // Create remote file
   console.log("Creating Remote cat.txt");
   await createRemoteFile("cat.txt");
@@ -64,7 +81,7 @@ async function runClient() {
   await subscribeToFile("cat.txt");
   console.log();
 
-
+  await waitForKeyPress("Get Remote files");
   // Get My remote files from directory service
   console.log(`Getting Remote files`);
   await getRemoteFiles();
@@ -74,13 +91,14 @@ async function runClient() {
   /***************************************************************************
    * Update remote files
    ***************************************************************************/
-
+  await waitForKeyPress("Update stefano.txt locally");
   // Update stefano.txt locally first
   console.log("Updating stefano.txt locally");
   await localUpdate("stefano.txt");
   console.log();
 
 
+  await waitForKeyPress("Update on remote");
   // Update that file on remote
   console.log("Updating remote stefano.txt");
   await updateRemoteFile("stefano.txt");
@@ -91,19 +109,19 @@ async function runClient() {
    * Rename remote files
    ***************************************************************************/
 
-
+  await waitForKeyPress("Rename cat.txt locally");
   // Rename file locally
   console.log("Renaming cat.txt to renamed.txt locally");
   await localRename("cat.txt", "renamed.txt");
   console.log();
 
-
+  await waitForKeyPress("Rename cat.txt remote");
   // Rename file on remote
   console.log("Renaming remote cat.txt to renamed.txt");
   await renameRemoteFile("cat.txt", "renamed.txt");
   console.log();
 
-
+  await waitForKeyPress("Get Remote files");
   // Get My remote files from directory service
   console.log(`Getting Remote files`);
   await getRemoteFiles();
