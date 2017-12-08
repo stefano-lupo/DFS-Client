@@ -3,7 +3,7 @@ import fs from 'fs'
 // Import functions from library
 import { localFile } from './lib/util';
 import { register, login } from './lib/securityService';
-import { getRemoteFiles } from './lib/directoryService';
+import { getRemoteFiles, getAllPublicFiles, registerSharedPublicFile } from './lib/directoryService';
 import { createRemoteFile, updateRemoteFile, renameRemoteFile, deleteRemoteFile, getRemoteFile } from './lib/remoteFileSystem';
 import { connectToCachingServer, subscribeToFile, unsubscribeToFile, disconnectFromCachingServer } from './lib/cachingService';
 
@@ -52,32 +52,63 @@ async function runClient() {
   console.log();
 
 
+  /**************************************************************************
+   * Register with Stefano's shared file
+   **************************************************************************/
+  // await waitForKeyPress("Get all public files");
+  // await getAllPublicFiles();
+  //
+  // await waitForKeyPress("Register with DS for stefano's shared stefano.txt ");
+  // await registerSharedPublicFile(localFile('franks_stefano.txt'), 'http://localhost:3000', '5a2abdc2e98c6d11ade033ec');
+  //
+  // await waitForKeyPress("Pull down that remote file");
+  // console.log(`Getting franks_stefano.txt from remote`);
+  // await getRemoteFile("franks_stefano.txt");
+
+  console.log("Subscribing to franks remote franks_stefano.txt");
+  await subscribeToFile("franks_stefano.txt");
+  console.log();
+
+  await waitForKeyPress("Update franks_stefano.txt locally");
+  // Update stefano.txt locally first
+  console.log("Updating franks_stefano.txt locally");
+  await localUpdate("franks_stefano.txt");
+  console.log();
+
+  await waitForKeyPress("Update franks_stefano.txt on remote");
+  // Update that file on remote
+  console.log("Updating remote franks_stefano.txt");
+  await updateRemoteFile("franks_stefano.txt");
+  console.log();
+
+  return;
+
   /***************************************************************************
    * Create Remote Files
    ***************************************************************************/
 
-  await waitForKeyPress("Create stefano.txt");
+  await waitForKeyPress("Create frank.txt");
   // Create remote file
-  console.log("Creating Remote stefano.txt");
-  await createRemoteFile("stefano.txt", false);
+  console.log("Creating Remote frank.txt");
+  await createRemoteFile("frank.txt", false);
   console.log();
 
 
   // Subscribe to remote file
-  console.log("Subscribing to remote stefano.txt");
-  await subscribeToFile("stefano.txt");
+  console.log("Subscribing to remote frank.txt");
+  await subscribeToFile("frank.txt");
   console.log();
 
 
-  await waitForKeyPress("Create cat.txt");
+  await waitForKeyPress("Create dog.txt");
   // Create remote file
-  console.log("Creating Remote cat.txt");
-  await createRemoteFile("cat.txt");
+  console.log("Creating Remote dog.txt");
+  await createRemoteFile("dog.txt");
   console.log();
 
 
   // Subscribe to remote file
-  console.log("Subscribing to remote cat.txt");
+  console.log("Subscribing to remote dog.txt");
   await subscribeToFile("cat.txt");
   console.log();
 
@@ -91,17 +122,17 @@ async function runClient() {
   /***************************************************************************
    * Update remote files
    ***************************************************************************/
-  await waitForKeyPress("Update stefano.txt locally");
+  await waitForKeyPress("Update frank.txt locally");
   // Update stefano.txt locally first
-  console.log("Updating stefano.txt locally");
-  await localUpdate("stefano.txt");
+  console.log("Updating frank.txt locally");
+  await localUpdate("frank.txt");
   console.log();
 
 
-  await waitForKeyPress("Update on remote");
+  await waitForKeyPress("Update frank.txt on remote");
   // Update that file on remote
-  console.log("Updating remote stefano.txt");
-  await updateRemoteFile("stefano.txt");
+  console.log("Updating remote frank.txt");
+  await updateRemoteFile("frank.txt");
   console.log();
 
 
@@ -109,16 +140,16 @@ async function runClient() {
    * Rename remote files
    ***************************************************************************/
 
-  await waitForKeyPress("Rename cat.txt locally");
+  await waitForKeyPress("Rename dog.txt locally");
   // Rename file locally
-  console.log("Renaming cat.txt to renamed.txt locally");
-  await localRename("cat.txt", "renamed.txt");
+  console.log("Renaming dog.txt to renamed.txt locally");
+  await localRename("dog.txt", "renamed.txt");
   console.log();
 
-  await waitForKeyPress("Rename cat.txt remote");
+  await waitForKeyPress("Rename dog.txt remote");
   // Rename file on remote
-  console.log("Renaming remote cat.txt to renamed.txt");
-  await renameRemoteFile("cat.txt", "renamed.txt");
+  console.log("Renaming remote dog.txt to renamed.txt");
+  await renameRemoteFile("dog.txt", "renamed.txt");
   console.log();
 
   await waitForKeyPress("Get Remote files");
@@ -133,19 +164,19 @@ async function runClient() {
    ***************************************************************************/
 
   // Delete file locally
-  console.log(`Deleting stefano.txt locally`);
-  localDelete("stefano.txt");
+  console.log(`Deleting frank.txt locally`);
+  localDelete("frank.txt");
   console.log();
 
   // Retrieve that file from remote
-  console.log(`Getting stefano.txt from remote`);
-  await getRemoteFile("stefano.txt");
+  console.log(`Getting frank.txt from remote`);
+  await getRemoteFile("frank.txt");
   console.log();
 
 
   // Ensure it was retrieved correctly
-  console.log(`Reading stefano.txt locally: `);
-  const fileStr = fs.readFileSync(localFile("stefano.txt"), {encoding: 'utf-8'});
+  console.log(`Reading frank.txt locally: `);
+  const fileStr = fs.readFileSync(localFile("frank.txt"), {encoding: 'utf-8'});
   console.log(fileStr, "\n");
 
 
@@ -165,8 +196,8 @@ async function runClient() {
    * Clean up and reset files for subsequent tests remote files
    ***************************************************************************/
   // Rename file locally
-  console.log("Renaming renamed.txt to cat.txt locally");
-  await localRename("renamed.txt", "cat.txt");
+  console.log("Renaming renamed.txt to dog.txt locally");
+  await localRename("renamed.txt", "dog.txt");
   console.log();
 
 
@@ -184,7 +215,7 @@ async function runClient() {
  **********************************************************************************************************************/
 
 function localUpdate(filename) {
-  fs.writeFileSync(localFile(filename), `Updated at ${new Date().toLocaleString()}`);
+  fs.writeFileSync(localFile(filename), `${TEST_NAME}: Updated at ${new Date().toLocaleString()}`);
   console.log(`Locally updated ${filename}`);
 }
 

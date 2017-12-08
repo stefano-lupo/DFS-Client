@@ -3,7 +3,7 @@ import fs from 'fs'
 // Import functions from library
 import { localFile } from './lib/util';
 import { register, login } from './lib/securityService';
-import { getRemoteFiles, getAllPublicFiles } from './lib/directoryService';
+import { getRemoteFiles } from './lib/directoryService';
 import { createRemoteFile, updateRemoteFile, renameRemoteFile, deleteRemoteFile, getRemoteFile } from './lib/remoteFileSystem';
 import { connectToCachingServer, subscribeToFile, unsubscribeToFile, disconnectFromCachingServer } from './lib/cachingService';
 
@@ -51,6 +51,7 @@ async function runClient() {
   await connectToCachingServer();
   console.log();
 
+
   /***************************************************************************
    * Create Remote Files
    ***************************************************************************/
@@ -66,7 +67,7 @@ async function runClient() {
   console.log("Subscribing to remote stefano.txt");
   await subscribeToFile("stefano.txt");
   console.log();
-/*
+
 
   await waitForKeyPress("Create cat.txt");
   // Create remote file
@@ -103,7 +104,6 @@ async function runClient() {
   await updateRemoteFile("stefano.txt");
   console.log();
 
-  return;
 
   /***************************************************************************
    * Rename remote files
@@ -184,7 +184,7 @@ async function runClient() {
  **********************************************************************************************************************/
 
 function localUpdate(filename) {
-  fs.writeFileSync(localFile(filename), `${TEST_NAME}: Updated at ${new Date().toLocaleString()}`);
+  fs.writeFileSync(localFile(filename), `Updated at ${new Date().toLocaleString()}`);
   console.log(`Locally updated ${filename}`);
 }
 
