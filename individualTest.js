@@ -69,6 +69,7 @@ async function runClient() {
   console.log();
 
 
+
   await waitForKeyPress("Create cat.txt");
   // Create remote file
   console.log("Creating Remote cat.txt");
@@ -80,6 +81,39 @@ async function runClient() {
   console.log("Subscribing to remote cat.txt");
   await subscribeToFile("cat.txt");
   console.log();
+
+
+
+
+  await waitForKeyPress("Create dog.txt");
+  // Create remote file
+  console.log("Creating Remote dog.txt");
+  await createRemoteFile("dog.txt", false);
+  console.log();
+
+
+  // Subscribe to remote file
+  console.log("Subscribing to remote dog.txt");
+  await subscribeToFile("dog.txt");
+  console.log();
+
+
+
+
+  await waitForKeyPress("Create turtle.txt");
+  // Create remote file
+  console.log("Creating Remote turtle.txt");
+  await createRemoteFile("turtle.txt", false);
+  console.log();
+
+
+  // Subscribe to remote file
+  console.log("Subscribing to remote stefano.txt");
+  await subscribeToFile("stefano.txt");
+  console.log();
+
+
+
 
   await waitForKeyPress("Get Remote files");
   // Get My remote files from directory service
