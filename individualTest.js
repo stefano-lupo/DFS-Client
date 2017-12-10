@@ -114,14 +114,6 @@ async function runClient() {
 
 
 
-
-  await waitForKeyPress("Get Remote files");
-  // Get My remote files from directory service
-  console.log(`Getting Remote files`);
-  await getRemoteFiles();
-  console.log();
-
-
   /***************************************************************************
    * Update remote files
    ***************************************************************************/
@@ -166,21 +158,26 @@ async function runClient() {
    * Fetch remote files
    ***************************************************************************/
 
-  // Delete file locally
-  console.log(`Deleting stefano.txt locally`);
-  localDelete("stefano.txt");
-  console.log();
+  await waitForKeyPress("Delete local and fetch remote test");
+  console.log(`Deleting and refetching 3 times to check each slave server`);
+  for(let i=0;i<3;i++) {
+    // Delete file locally
+    console.log(`Deleting stefano.txt locally`);
+    localDelete("stefano.txt");
+    console.log();
 
-  // Retrieve that file from remote
-  console.log(`Getting stefano.txt from remote`);
-  await getRemoteFile("stefano.txt");
-  console.log();
+    // Retrieve that file from remote
+    console.log(`Getting stefano.txt from remote`);
+    await getRemoteFile("stefano.txt");
+    console.log();
 
 
-  // Ensure it was retrieved correctly
-  console.log(`Reading stefano.txt locally: `);
-  const fileStr = fs.readFileSync(localFile("stefano.txt"), {encoding: 'utf-8'});
-  console.log(fileStr, "\n");
+    // Ensure it was retrieved correctly
+    console.log(`Reading stefano.txt locally: `);
+    const fileStr = fs.readFileSync(localFile("stefano.txt"), {encoding: 'utf-8'});
+    console.log(fileStr, "\n");
+  }
+
 
 
 
