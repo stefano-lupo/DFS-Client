@@ -1,0 +1,69 @@
+
+Press any key to: Register/Login
+
+Registering stefano@test.com with security service
+Already registered, client key should already be available
+
+Logging stefano@test.com into the security service
+Ticket given: 
+ec4f6af2265db882e2975cdea8f0d4a586c6306ab81aacac0c73474e4fdc10a9819a168d26964e6bfaab28bcb6b80105862cf8e34531c0361b30474cd8bebaaddfa2778c81fceba6dbff2751fe47803b737a40bbfcce7d388c82e9b3a4999923e61d6b9587ae7782183cc8f295ae065fed7e20e82e03f703e90a687512c0b05224bc6aeffd6fe8352b66c98a26c5bf0f48954ac8a91a59746b22957caf0253ec705f5ba376cfb7fc90f25f4b0a60ffd9a197c4a929fea6413080b1fca2b00482 
+
+Session key given: 
+c5d114afee204a24a9ba8179274b770ce09a5ccfc343381be4c43d257551a52b8d0d788889408876f982b8cde86e1da3
+Setting ticket and session key
+Connecting to caching server
+Creating socket
+WebSocket Client Connected
+
+
+
+Press any key to: Create stefano.txt
+
+Creating Remote stefano.txt
+Received available remote host http://localhost:3000/file
+Result of createRemoteFile: 
+Successfully saved /home/stefano/coding/distributedFileSystem/DFS-Client/users/Stefano/remoteFiles/stefano.txt for 5a2ee1f1c61eee5f6b96a964
+
+Subscribing to remote stefano.txt
+Response from subscribeToFile: 
+Client 5a2ee1f1c61eee5f6b96a964 is already subscribed to file 5a2ee1f34f8c4a37a744228e
+
+
+Press any key to: Read local copy of stefano.txt
+
+Reading stefano.txt locally: 
+Stefano: Updated at 12/11/2017, 8:04:00 PM 
+
+
+Press any key to: Read local copy of stefano.txt again
+
+
+Version 5 is now available
+
+Updating 5a2ee1f34f8c4a37a744228e due to changes on remote
+
+Reading stefano.txt locally: 
+Frank: Updated at 12/11/2017, 8:04:56 PM 
+
+
+Press any key to: Update stefano.txt locally
+
+Updating stefano.txt locally
+Locally updated stefano.txt
+
+
+Press any key to: Update stefano.txt on remote
+
+Updating remote stefano.txt
+Using cached version of remote master
+Acquired Lock for 5a2ee1f34f8c4a37a744228e
+
+Version 6 is now available
+
+Updating 5a2ee1f34f8c4a37a744228e due to changes on remote
+
+Result of updateRemoteFile: 
+File /home/stefano/coding/distributedFileSystem/DFS-Client/users/Stefano/remoteFiles/stefano.txt updated successfully
+Releasing lock
+Released Lock - Lock for 5a2ee1f1c61eee5f6b96a964 on 5a2ee1f34f8c4a37a744228e released
+

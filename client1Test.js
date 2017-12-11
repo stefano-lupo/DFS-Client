@@ -3,9 +3,8 @@ import fs from 'fs'
 // Import functions from library
 import { localFile } from './lib/util';
 import { register, login } from './lib/securityService';
-import { getRemoteFiles, getPublicFilesForUser } from './lib/directoryService';
-import { createRemoteFile, updateRemoteFile, renameRemoteFile, deleteRemoteFile, getRemoteFile } from './lib/remoteFileSystem';
-import { connectToCachingServer, subscribeToFile, unsubscribeToFile, disconnectFromCachingServer } from './lib/cachingService';
+import { createRemoteFile, updateRemoteFile } from './lib/remoteFileSystem';
+import { subscribeToFile } from './lib/cachingService';
 
 const TEST_EMAIL = process.argv[2] || 'stefano@test.com';
 const TEST_NAME = process.argv[3] || 'Stefano';
@@ -48,11 +47,6 @@ async function runClient() {
   console.log();
 
 
-  // Connect to the caching server
-  console.log(`Connecting to caching server`);
-  await connectToCachingServer();
-  console.log();
-
   /***************************************************************************
    * Create Remote Files
    ***************************************************************************/
@@ -63,10 +57,24 @@ async function runClient() {
   await createRemoteFile("stefano.txt", false);
   console.log();
 
+
   // Subscribe to remote file
   console.log("Subscribing to remote stefano.txt");
   await subscribeToFile("stefano.txt");
   console.log();
+
+  // Read the created file
+  await waitForKeyPress("Read local copy of stefano.txt");
+  console.log(`Reading stefano.txt locally: `);
+  let fileStr = fs.readFileSync(localFile("stefano.txt"), {encoding: 'utf-8'});
+  console.log(fileStr, "\n");
+
+
+  // Read the created file
+  await waitForKeyPress("Read local copy of stefano.txt again");
+  console.log(`Reading stefano.txt locally: `);
+  fileStr = fs.readFileSync(localFile("stefano.txt"), {encoding: 'utf-8'});
+  console.log(fileStr, "\n");
 
 
   /***************************************************************************
@@ -80,19 +88,10 @@ async function runClient() {
   console.log();
 
   // Update that file on remote
-  await waitForKeyPress("Update on remote");
+  await waitForKeyPress("Update stefano.txt on remote");
   console.log("Updating remote stefano.txt");
   await updateRemoteFile("stefano.txt");
   console.log();
-
-
-  // Disconnect (gracefully) from caching server
-  await waitForKeyPress("Disconnect");
-  console.log("Disconnecting from caching server");
-  disconnectFromCachingServer();
-  console.log();
-
-  process.exit();
 }
 
 
@@ -103,15 +102,4 @@ async function runClient() {
 function localUpdate(filename) {
   fs.writeFileSync(localFile(filename), `${TEST_NAME}: Updated at ${new Date().toLocaleString()}`);
   console.log(`Locally updated ${filename}`);
-}
-
-
-function localRename(oldFileName, newFileName) {
-  fs.renameSync(localFile(oldFileName), localFile(newFileName));
-  console.log(`Locally renamed ${oldFileName} to ${newFileName}`);
-}
-
-function localDelete(filename) {
-  fs.unlinkSync(localFile(filename));
-  console.log(`Locally deleted ${filename}`);
 }

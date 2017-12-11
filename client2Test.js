@@ -3,9 +3,9 @@ import fs from 'fs'
 // Import functions from library
 import { localFile } from './lib/util';
 import { register, login } from './lib/securityService';
-import { getRemoteFiles, getPublicFilesForUser, registerSharedPublicFile } from './lib/directoryService';
-import { createRemoteFile, updateRemoteFile, renameRemoteFile, deleteRemoteFile, getRemoteFile } from './lib/remoteFileSystem';
-import { connectToCachingServer, subscribeToFile, unsubscribeToFile, disconnectFromCachingServer } from './lib/cachingService';
+import { getPublicFilesForUser, registerSharedPublicFile } from './lib/directoryService';
+import { updateRemoteFile, getRemoteFile } from './lib/remoteFileSystem';
+import { subscribeToFile } from './lib/cachingService';
 
 const TEST_EMAIL = process.argv[2] || 'stefano@test.com';
 const TEST_NAME = process.argv[3] || 'Stefano';
@@ -46,32 +46,43 @@ async function runClient() {
   await login(TEST_EMAIL, TEST_PASSWORD);
   console.log();
 
-  // Connect to the caching server
-  console.log(`Connecting to caching server`);
-  await connectToCachingServer();
-  console.log();
-
 
   /**************************************************************************
    * Register with Stefano's shared file
    **************************************************************************/
+
+  // Get all Stefanos public files
   await waitForKeyPress("Get all Stefano's public files");
   const { _id, publicFiles } = await getPublicFilesForUser(`stefano@test.com`);
+  console.log();
 
   // Pick some file (just picking most recently uploaded file for example)
   const fileId = publicFiles[publicFiles.length-1].remoteFileId;
 
-  await waitForKeyPress("Register with DS for stefano's shared stefano.txt ");
+  // Register that public file as shared file with directory service
+  await waitForKeyPress("Register with directory service for stefano's shared stefano.txt ");
   await registerSharedPublicFile(localFile('franks_stefano.txt'), _id, fileId);
+  console.log();
 
-  await waitForKeyPress("Pull down that remote file");
+
+  // Download that file from remote
+  await waitForKeyPress("Pull down that file from remote.");
   console.log(`Getting franks_stefano.txt from remote`);
   await getRemoteFile("franks_stefano.txt");
   console.log();
 
+  // Subscribe to that file
   console.log("Subscribing to franks remote franks_stefano.txt");
   await subscribeToFile("franks_stefano.txt");
   console.log();
+
+  // Read the downloaded file
+  await waitForKeyPress("Read local copy of franks_stefano.txt");
+  console.log(`Reading franks_stefano.txt locally: `);
+  let fileStr = fs.readFileSync(localFile("franks_stefano.txt"), {encoding: 'utf-8'});
+  console.log(fileStr, "\n");
+
+
 
 
   /**************************************************************************
@@ -84,19 +95,24 @@ async function runClient() {
   await localUpdate("franks_stefano.txt");
   console.log();
 
+  // Read the updated file
+  await waitForKeyPress("Read updated local copy of franks_stefano.txt");
+  console.log(`Reading franks_stefano.txt locally: `);
+  fileStr = fs.readFileSync(localFile("franks_stefano.txt"), {encoding: 'utf-8'});
+  console.log(fileStr, "\n");
+
   // Update that file on remote
   await waitForKeyPress("Update franks_stefano.txt on remote");
   console.log("Updating remote franks_stefano.txt");
   await updateRemoteFile("franks_stefano.txt");
   console.log();
 
-  // Disconnect (gracefully) from caching server
-  await waitForKeyPress("Disconnect");
-  console.log("Disconnecting from caching server");
-  disconnectFromCachingServer();
-  console.log();
 
-  process.exit();
+  // Read stefanos updates to file
+  await waitForKeyPress("Read local copy of franks_stefano.txt");
+  console.log(`Reading franks_stefano.txt locally: `);
+  fileStr = fs.readFileSync(localFile("franks_stefano.txt"), {encoding: 'utf-8'});
+  console.log(fileStr, "\n");
 }
 
 
@@ -107,15 +123,4 @@ async function runClient() {
 function localUpdate(filename) {
   fs.writeFileSync(localFile(filename), `${TEST_NAME}: Updated at ${new Date().toLocaleString()}`);
   console.log(`Locally updated ${filename}`);
-}
-
-
-function localRename(oldFileName, newFileName) {
-  fs.renameSync(localFile(oldFileName), localFile(newFileName));
-  console.log(`Locally renamed ${oldFileName} to ${newFileName}`);
-}
-
-function localDelete(filename) {
-  fs.unlinkSync(localFile(filename));
-  console.log(`Locally deleted ${filename}`);
 }

@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "build": "rimraf dist/ && babel ./ --out-dir dist/ --ignore ./node_modules,./.babelrc,./package.json,./npm-debug.log --copy-files",
-    "individual": "babel-node individualTest.js test@test.com Test 4321",
-    "client1": "babel-node client1Test.js stefano@test.com Stefano 1234",
-    "client2": "babel-node client2Test.js frank@test.com Frank frankyy "
+    "individual": "babel-node individualTest.js test@test.com Test 4321 | tee users/Test/individual.log",
+    "client1": "babel-node client1Test.js stefano@test.com Stefano 1234 | tee users/Stefano/client1.log",
+    "client2": "babel-node client2Test.js frank@test.com Frank frankyy | tee users/Frank/client2.log"
   },
   "author": "Stefano Lupo",
   "license": "ISC",

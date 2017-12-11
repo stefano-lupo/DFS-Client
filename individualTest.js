@@ -5,7 +5,7 @@ import { localFile } from './lib/util';
 import { register, login } from './lib/securityService';
 import { getRemoteFiles } from './lib/directoryService';
 import { createRemoteFile, updateRemoteFile, renameRemoteFile, deleteRemoteFile, getRemoteFile } from './lib/remoteFileSystem';
-import { connectToCachingServer, subscribeToFile, unsubscribeToFile, disconnectFromCachingServer } from './lib/cachingService';
+import { subscribeToFile } from './lib/cachingService';
 
 const TEST_EMAIL = process.argv[2] || 'stefano@test.com';
 const TEST_NAME = process.argv[3] || 'Stefano';
@@ -46,10 +46,6 @@ async function runClient() {
   await login(TEST_EMAIL, TEST_PASSWORD);
   console.log();
 
-  // Connect to the caching server
-  console.log(`Connecting to caching server`);
-  await connectToCachingServer();
-  console.log();
 
 
   /***************************************************************************
@@ -195,14 +191,6 @@ async function runClient() {
   console.log("Renaming renamed.txt to cat.txt locally");
   await localRename("renamed.txt", "cat.txt");
   console.log();
-
-
-  // Disconnect (gracefully) from caching server
-  console.log("Disconnecting from caching server");
-  disconnectFromCachingServer();
-  console.log();
-
-
 }
 
 

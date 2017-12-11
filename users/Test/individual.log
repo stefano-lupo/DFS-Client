@@ -1,0 +1,186 @@
+
+Press any key to: Register/Login
+
+Registering test@test.com with security service
+Saved Client Key
+
+Logging test@test.com into the security service
+Ticket given: 
+f15f07d512fe52b541def97dbbcae64a4fb702d279b86e3fed37260b2b18c489cce813692d8356d0be342049367a9cff1d527434be06df8cb11e9c2f7ea6383202870c44a63468cb55460a5588781de532607ec9ce6b7ea01335230ed95dae5f49cfe61f132886477b9d2f34e4a522ebe2737038149b730bb07a4d8243d269cd2c3d43f21a861cb7e532b401f263799e4d2be3199119fcb5eebfa7eed394a4bcfded1963f1184fe1b35ea763c0a13d234abf358b2af813793d6c3b6c62ac3376 
+
+Session key given: 
+199fbdb58fa15e8c0aa68f104b37171babfc8b8456c11351af325c004f47764d409c2a432072d080a8c63aad7de1aeb1
+Setting ticket and session key
+Connecting to caching server
+Creating socket
+WebSocket Client Connected
+
+
+
+Press any key to: Create stefano.txt
+
+Creating Remote stefano.txt
+Received available remote host http://localhost:3000/file
+Result of createRemoteFile: 
+Successfully saved /home/stefano/coding/distributedFileSystem/DFS-Client/users/Test/remoteFiles/stefano.txt for 5a2ee52ac61eee5f6b96a966
+
+Subscribing to remote stefano.txt
+Response from subscribeToFile: 
+5a2ee52ac61eee5f6b96a966 has been successfully subscribed to 5a2ee52b4f8c4a37a74422a0
+
+
+Press any key to: Create cat.txt
+
+Creating Remote cat.txt
+Using cached version of remote master
+Result of createRemoteFile: 
+Successfully saved /home/stefano/coding/distributedFileSystem/DFS-Client/users/Test/remoteFiles/cat.txt for 5a2ee52ac61eee5f6b96a966
+
+Subscribing to remote cat.txt
+Response from subscribeToFile: 
+5a2ee52ac61eee5f6b96a966 has been successfully subscribed to 5a2ee52c4f8c4a37a74422a2
+
+
+Press any key to: Create dog.txt
+
+Creating Remote dog.txt
+Using cached version of remote master
+Result of createRemoteFile: 
+Successfully saved /home/stefano/coding/distributedFileSystem/DFS-Client/users/Test/remoteFiles/dog.txt for 5a2ee52ac61eee5f6b96a966
+
+Subscribing to remote dog.txt
+Response from subscribeToFile: 
+5a2ee52ac61eee5f6b96a966 has been successfully subscribed to 5a2ee52c4f8c4a37a74422a4
+
+
+Press any key to: Create turtle.txt
+
+Creating Remote turtle.txt
+Using cached version of remote master
+Result of createRemoteFile: 
+Successfully saved /home/stefano/coding/distributedFileSystem/DFS-Client/users/Test/remoteFiles/turtle.txt for 5a2ee52ac61eee5f6b96a966
+
+Subscribing to remote stefano.txt
+Response from subscribeToFile: 
+Client 5a2ee52ac61eee5f6b96a966 is already subscribed to file 5a2ee52b4f8c4a37a74422a0
+
+
+Press any key to: Update stefano.txt locally
+
+Updating stefano.txt locally
+Locally updated stefano.txt
+
+
+Press any key to: Update on remote
+
+Updating remote stefano.txt
+Using cached version of remote master
+Acquired Lock for 5a2ee52b4f8c4a37a74422a0
+
+Version 1 is now available
+
+Updating 5a2ee52b4f8c4a37a74422a0 due to changes on remote
+
+Result of updateRemoteFile: 
+File /home/stefano/coding/distributedFileSystem/DFS-Client/users/Test/remoteFiles/stefano.txt updated successfully
+Releasing lock
+Released Lock - Lock for 5a2ee52ac61eee5f6b96a966 on 5a2ee52b4f8c4a37a74422a0 released
+
+
+Press any key to: Rename cat.txt locally
+
+Renaming cat.txt to renamed.txt locally
+Locally renamed cat.txt to renamed.txt
+
+
+Press any key to: Rename cat.txt remote
+
+Renaming remote cat.txt to renamed.txt
+Using cached version of remote master
+Acquired Lock for 5a2ee52c4f8c4a37a74422a2
+Result of renameRemoteFile: 
+Successfully saved /home/stefano/coding/distributedFileSystem/DFS-Client/users/Test/remoteFiles/renamed.txt for 5a2ee52ac61eee5f6b96a966
+Releasing lock
+Released Lock - Lock for 5a2ee52ac61eee5f6b96a966 on 5a2ee52c4f8c4a37a74422a2 released
+
+
+Press any key to: Get Remote files
+
+Getting Remote files
+[ { clientFileName: '/home/stefano/coding/distributedFileSystem/DFS-Client/users/Test/remoteFiles/stefano.txt',
+    remoteFileId: '5a2ee52b4f8c4a37a74422a0',
+    _id: '5a2ee52bc73139391781ec7a',
+    slaves: 
+     [ 'http://localhost:3010',
+       'http://localhost:3011',
+       'http://localhost:3012' ],
+    isPrivate: false },
+  { clientFileName: '/home/stefano/coding/distributedFileSystem/DFS-Client/users/Test/remoteFiles/cat.txt',
+    remoteFileId: '5a2ee52c4f8c4a37a74422a2',
+    _id: '5a2ee52cc73139391781ec7b',
+    slaves: 
+     [ 'http://localhost:3010',
+       'http://localhost:3011',
+       'http://localhost:3012' ],
+    isPrivate: true },
+  { clientFileName: '/home/stefano/coding/distributedFileSystem/DFS-Client/users/Test/remoteFiles/dog.txt',
+    remoteFileId: '5a2ee52c4f8c4a37a74422a4',
+    _id: '5a2ee52cc73139391781ec7c',
+    slaves: 
+     [ 'http://localhost:3010',
+       'http://localhost:3011',
+       'http://localhost:3012' ],
+    isPrivate: false },
+  { clientFileName: '/home/stefano/coding/distributedFileSystem/DFS-Client/users/Test/remoteFiles/turtle.txt',
+    remoteFileId: '5a2ee52c4f8c4a37a74422a6',
+    _id: '5a2ee52cc73139391781ec7d',
+    slaves: 
+     [ 'http://localhost:3010',
+       'http://localhost:3011',
+       'http://localhost:3012' ],
+    isPrivate: false },
+  { clientFileName: '/home/stefano/coding/distributedFileSystem/DFS-Client/users/Test/remoteFiles/renamed.txt',
+    remoteFileId: '5a2ee52e4f8c4a37a74422aa',
+    _id: '5a2ee52ec73139391781ec7e',
+    slaves: 
+     [ 'http://localhost:3010',
+       'http://localhost:3011',
+       'http://localhost:3012' ],
+    isPrivate: false } ]
+
+
+Press any key to: Delete local and fetch remote test
+
+Deleting and re-fetching 3 times to check each slave server
+Deleting stefano.txt locally
+Locally deleted stefano.txt
+
+Getting stefano.txt from remote
+
+Reading stefano.txt locally: 
+Updated at 12/11/2017, 8:06:05 PM 
+
+Deleting stefano.txt locally
+Locally deleted stefano.txt
+
+Getting stefano.txt from remote
+
+Reading stefano.txt locally: 
+Updated at 12/11/2017, 8:06:05 PM 
+
+Deleting stefano.txt locally
+Locally deleted stefano.txt
+
+Getting stefano.txt from remote
+
+Reading stefano.txt locally: 
+Updated at 12/11/2017, 8:06:05 PM 
+
+Deleting remote renamed.txt
+Using cached version of remote master
+Result of deleteRemoteFile: 
+Deleted file 5a2ee52e4f8c4a37a74422aa
+
+Renaming renamed.txt to cat.txt locally
+Locally renamed renamed.txt to cat.txt
+

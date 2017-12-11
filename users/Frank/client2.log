@@ -1,0 +1,83 @@
+
+Press any key to: Register/Login
+
+Registering frank@test.com with security service
+Already registered, client key should already be available
+
+Logging frank@test.com into the security service
+Ticket given: 
+77802faf0290ff573376e7db4de78080e03c864f9cf58980ae6d6e03d199d82f5f0ceaacea304a12683e340bf03f787c01b352f08382a3735f5c00eb51a4b716f7b54572b70786080a72c87184e5c52a216ba7f9311294487d235831720bd219117f1db6225a7c6446bfbe03cad7490127debe89955637874e723aafcfad72f814b020c04d0f91ee46d498ba63f733ef415090f09c7be67ae87b774a88a002d792907b5134f1f936db3d006c24f5e5ede9e102604b28edb77f7340cd15d9a732 
+
+Session key given: 
+92e9367a240f18d408334e421ca780e84fd1f5267c8fbed9517310f273a7ffc19d99a26b08d294aaecf331d7af7076bb
+Setting ticket and session key
+Connecting to caching server
+Creating socket
+WebSocket Client Connected
+
+
+
+Press any key to: Get all Stefano's public files
+
+Public files available: 
+{"_id":"5a2ee1f1c61eee5f6b96a964","publicFiles":[{"remoteFileId":"5a2ee1f34f8c4a37a744228e","clientFileName":"/home/stefano/coding/distributedFileSystem/DFS-Client/users/Stefano/remoteFiles/stefano.txt"},{"remoteFileId":"5a2ee4a14f8c4a37a7442294","clientFileName":"/home/stefano/coding/distributedFileSystem/DFS-Client/users/Stefano/remoteFiles/stefano.txt"},{"remoteFileId":"5a2ee4e24f8c4a37a744229a","clientFileName":"/home/stefano/coding/distributedFileSystem/DFS-Client/users/Stefano/remoteFiles/stefano.txt"}]}
+
+
+Press any key to: Register with directory service for stefano's shared stefano.txt 
+
+Response from registering with a shared public file: Added a directory entry for 5a2ee1f7c61eee5f6b96a965 for file /home/stefano/coding/distributedFileSystem/DFS-Client/users/Frank/remoteFiles/franks_stefano.txt
+
+
+Press any key to: Pull down that file from remote.
+
+Getting franks_stefano.txt from remote
+
+Subscribing to franks remote franks_stefano.txt
+Response from subscribeToFile: 
+Client 5a2ee1f7c61eee5f6b96a965 is already subscribed to file 5a2ee1f34f8c4a37a744228e
+
+
+Press any key to: Read local copy of franks_stefano.txt
+
+Reading franks_stefano.txt locally: 
+Stefano: Updated at 12/11/2017, 8:04:00 PM 
+
+
+Press any key to: Update franks_stefano.txt locally
+
+Updating franks_stefano.txt locally
+Locally updated franks_stefano.txt
+
+
+Press any key to: Read updated local copy of franks_stefano.txt
+
+Reading franks_stefano.txt locally: 
+Frank: Updated at 12/11/2017, 8:04:56 PM 
+
+
+Press any key to: Update franks_stefano.txt on remote
+
+Updating remote franks_stefano.txt
+Received available remote host http://localhost:3000/file
+Acquired Lock for 5a2ee1f34f8c4a37a744228e
+
+Version 5 is now available
+
+Updating 5a2ee1f34f8c4a37a744228e due to changes on remote
+
+Result of updateRemoteFile: 
+File /home/stefano/coding/distributedFileSystem/DFS-Client/users/Frank/remoteFiles/franks_stefano.txt updated successfully
+Releasing lock
+Released Lock - Lock for 5a2ee1f7c61eee5f6b96a965 on 5a2ee1f34f8c4a37a744228e released
+
+
+Press any key to: Read local copy of franks_stefano.txt
+
+
+Version 6 is now available
+
+Updating 5a2ee1f34f8c4a37a744228e due to changes on remote
+
+Reading franks_stefano.txt locally: 
+Stefano: Updated at 12/11/2017, 8:05:01 PM 
+
