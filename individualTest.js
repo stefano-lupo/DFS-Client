@@ -69,9 +69,8 @@ async function runClient() {
   console.log();
 
 
-
-  await waitForKeyPress("Create cat.txt");
   // Create remote file
+  await waitForKeyPress("Create cat.txt");
   console.log("Creating Remote cat.txt");
   await createRemoteFile("cat.txt");
   console.log();
@@ -83,10 +82,8 @@ async function runClient() {
   console.log();
 
 
-
-
-  await waitForKeyPress("Create dog.txt");
   // Create remote file
+  await waitForKeyPress("Create dog.txt");
   console.log("Creating Remote dog.txt");
   await createRemoteFile("dog.txt", false);
   console.log();
@@ -99,9 +96,8 @@ async function runClient() {
 
 
 
-
-  await waitForKeyPress("Create turtle.txt");
   // Create remote file
+  await waitForKeyPress("Create turtle.txt");
   console.log("Creating Remote turtle.txt");
   await createRemoteFile("turtle.txt", false);
   console.log();
@@ -159,7 +155,7 @@ async function runClient() {
    ***************************************************************************/
 
   await waitForKeyPress("Delete local and fetch remote test");
-  console.log(`Deleting and refetching 3 times to check each slave server`);
+  console.log(`Deleting and re-fetching 3 times to check each slave server`);
   for(let i=0;i<3;i++) {
     // Delete file locally
     console.log(`Deleting stefano.txt locally`);

@@ -6,8 +6,8 @@
   "scripts": {
     "build": "rimraf dist/ && babel ./ --out-dir dist/ --ignore ./node_modules,./.babelrc,./package.json,./npm-debug.log --copy-files",
     "individual": "babel-node individualTest.js test@test.com Test 4321",
-    "stefano": "babel-node stefanoTest.js stefano@test.com Stefano 1234",
-    "frank": "babel-node frankTest.js frank@test.com Frank frankyy "
+    "client1": "babel-node client1Test.js stefano@test.com Stefano 1234",
+    "client2": "babel-node client2Test.js frank@test.com Frank frankyy "
   },
   "author": "Stefano Lupo",
   "license": "ISC",
