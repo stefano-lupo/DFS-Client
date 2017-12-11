@@ -1,7 +1,2 @@
 .idea
 node_modules
-downloaded
-clientKey.txt
-lib/clientKey.txt
-.env
-exampleFiles
