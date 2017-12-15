@@ -7,3 +7,6 @@
 [submodule "DFS-Locking-Service"]
 	path = DFS-Locking-Service
 	url = https://github.com/stefano-lupo/DFS-Locking-Service
+[submodule "DFS-Caching-Service"]
+	path = DFS-Caching-Service
+	url = https://github.com/stefano-lupo/DFS-Caching-Service
