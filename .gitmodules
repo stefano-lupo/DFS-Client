@@ -4,3 +4,6 @@
 [submodule "DFS-Directory-Service"]
 	path = DFS-Directory-Service
 	url = https://github.com/stefano-lupo/DFS-Directory-Service
+[submodule "DFS-Locking-Service"]
+	path = DFS-Locking-Service
+	url = https://github.com/stefano-lupo/DFS-Locking-Service
