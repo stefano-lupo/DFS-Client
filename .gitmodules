@@ -10,3 +10,6 @@
 [submodule "DFS-Caching-Service"]
 	path = DFS-Caching-Service
 	url = https://github.com/stefano-lupo/DFS-Caching-Service
+[submodule "DFS-Security-Service"]
+	path = DFS-Security-Service
+	url = https://github.com/stefano-lupo/DFS-Security-Service
