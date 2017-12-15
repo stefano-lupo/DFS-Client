@@ -1,3 +1,6 @@
 [submodule "DFS-File-System"]
 	path = DFS-File-System
 	url = https://github.com/stefano-lupo/DFS-File-System
+[submodule "DFS-Directory-Service"]
+	path = DFS-Directory-Service
+	url = https://github.com/stefano-lupo/DFS-Directory-Service
